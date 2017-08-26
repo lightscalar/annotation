@@ -81,8 +81,8 @@ export default {
       items: [
         { heading: 'Sessions' },
         { icon: 'fa-plus-square', text: 'Add Session', route: 'LandingPage' },
-        { icon: 'fa-th-list', text: 'Active Sessions', route: 'LandingPage' },
-        { icon: 'fa-archive', text: 'Sessions Archive', route: 'LandingPage'  },
+        { icon: 'fa-th-list', text: 'Active Sessions', route: 'ActiveSessions' },
+        { icon: 'fa-archive', text: 'Sessions Archive', route: 'Sessions'  },
         { divider: true },
         { heading: 'Cohort Management' },
         { icon: 'fa-plus-square', text: 'Create Cohort', route:'CreateCohort'},
@@ -100,7 +100,6 @@ export default {
   },
 
   mounted () {
-    this.$store.commit('reset')
   }
 }
 </script>
@@ -111,7 +110,7 @@ export default {
   font-family: 'PT Sans';
   font-weight: bold;
   font-size: 14px;
-  color: #ff2861;
+  color: #c62828;
   text-transform: uppercase;
 }
 html, body, main {
@@ -119,7 +118,7 @@ html, body, main {
 }
 .subheader {
   font-weight: bold;
-  color: #ff2861 !important;
+  color: #c62828 !important;
   font-size: 18px !important;
 }
 .side-icon {

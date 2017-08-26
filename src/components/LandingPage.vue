@@ -1,19 +1,22 @@
 <template>
+
   <v-parallax src='static/heart-logo@2x.png' class='splash'>
     <v-layout align-center justify-center>
       <h1 class='logo text--white'>NEW VITAL SIGNS</h1>
     </v-layout>
     <v-layout align-center justify-center>
       <input autofocus maxlength="6" class='code-input' v-model='sessionId'
-                       @focus='focusInput'
-                       pattern='[a-zA-Z]{6}' type='text'
-                       placeholder='Session ID' name='patientCode'>
+         @focus='focusInput'
+         @keyup='keyPress'
+         pattern='[a-zA-Z]{6}' type='text'
+         placeholder='Session ID' name='patientCode'>
       </input>
       <v-btn dark primary large class='large-btn' @click.native='loadSession'>
         <v-icon class='add-patient'>fa-plus</v-icon>
       </v-btn>
     </v-layout>
   </v-parallax>
+
 </template>
 
 <script>
@@ -31,6 +34,11 @@
     methods: {
       focusInput() {
         this.sessionId = null
+      },
+      keyPress(key) {
+        if (key.keyCode == 13) {
+          this.loadSession()
+        }
       },
       loadSession() {
         this.$store.dispatch('querySessions', this.sessionId)
@@ -73,6 +81,8 @@
 }
 .add-patient {
     color: #305580;
+}
+.container {
 }
 .large-btn {
     font-size: 50 !important;

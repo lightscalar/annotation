@@ -1,7 +1,6 @@
 <template>
   <v-container>
 
-
     <v-layout>
       <v-flex xs12 lg8 offset-lg2>
         <v-card>
@@ -28,14 +27,19 @@
       <v-flex xs12 lg8 offset-lg2>
         <v-card class='elevation-1'>
           <v-card-title class=''>
-            <v-icon>fa-info-circle</v-icon> &nbsp; Cohort Details
+            <v-subheader>
+              Cohort Details
+            </v-subheader>
           </v-card-title>
           <v-divider></v-divider>
           <v-card-text class="elevation-0">
             <v-layout row wrap>
               <v-flex lg6 xs12>
-                <v-text-field label='Name' v-model='cohort.name'></v-text-field>
                 <v-text-field
+                  @keyup='submit'
+                  label='Name' v-model='cohort.name'></v-text-field>
+                <v-text-field
+                       @keyup='submit'
                        label='Description'
                        v-model='cohort.description'>
                 </v-text-field>
@@ -44,9 +48,9 @@
           </v-card-text>
           <v-divider></v-divider>
           <v-card-actions class='actions-panel'>
-            <v-btn error flat @click.native='showDelete=true'>Delete</v-btn>
             <v-spacer></v-spacer>
-            <v-btn primary @click.native='updateDetails'>Save</v-btn>
+            <v-btn error flat @click.native='showDelete=true'>Delete</v-btn>
+            <v-btn flat primary @click.native='updateDetails'>Update</v-btn>
           </v-card-actions>
         </v-card>
       </v-flex>
@@ -58,7 +62,9 @@
       <v-card class='elevation-1'>
         <v-card>
           <v-card-title class=''>
-            <v-icon small>fa-list-alt</v-icon> &nbsp; Reports
+            <v-subheader>
+            Reports
+            </v-subheader>
           </v-card-title>
 
           <v-divider></v-divider>
@@ -72,10 +78,10 @@
                   <v-list-tile-avatar>
                     <v-icon
                        v-if="report.type=='snapshot'"
-                       class='side-icon'>fa-line-chart</v-icon>
+                       class='red--text text--darken-3'>fa-line-chart</v-icon>
                      <v-icon
                        v-else
-                       class='side-icon'>fa-history</v-icon>
+                       class='blue--text text--darken-3'>fa-history</v-icon>
                   </v-list-tile-avatar>
                   <v-list-tile-content>
                     <v-list-tile-title v-html="report.name"></v-list-tile-title>
@@ -143,11 +149,18 @@
     },
 
     methods: {
+
+      submit (keyEvent) {
+        if (keyEvent.keyCode == 13) {
+          this.updateDetails()
+        }
+      },
+
       deleteCohort() {
         this.$store.dispatch('deleteCohort', this.id)
       },
 
-      updateDetails() {
+      updateDetails () {
         var cohort = {name: this.cohort.name,
           description: this.cohort.description,
           _id: this.cohort._id}
@@ -161,18 +174,22 @@
       createReport() {
         var self = this
         var newReport = this.$store.state.report
+        newReport.uid = guid()
         this.cohort.reports.push(newReport)
         this.$store.dispatch('updateCohort', this.cohort).then(function() {
           self.$router.push({name: 'Report',
             params: {id: self.cohort._id, reportId: self.cohort.reports.length-1}})
         })
       }
+
     },
 
     computed: {
+
       cohort() {
         return this.$store.state.cohort
       }
+
     },
 
     mounted() {
@@ -185,7 +202,7 @@
 <style scoped>
 
 .container {
-  padding-top: 75px;;
+  padding-top: 85px;;
 }
 .header {
   background-color: #305580;
@@ -193,7 +210,7 @@
 }
 .actions-panel {
 }
-.brighten {
-  color: black
+.icon {
+  margin-right: 15px;
 }
 </style>

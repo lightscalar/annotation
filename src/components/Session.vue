@@ -1,5 +1,7 @@
 <template>
+  
   <v-container>
+
     <v-layout>
       <v-flex xs12 lg8 offset-lg2>
         <v-card class='elevation-0 banner'>
@@ -9,31 +11,41 @@
                 Home
               </v-breadcrumbs-item>
               <v-breadcrumbs-item href='/#' class='brighten'>
-                {{session.hid}} Session
+                {{session.hid}}
               </v-breadcrumbs-item>
             </v-breadcrumbs>
+            <v-spacer></v-spacer>
+            <v-select
+              label='Active Queue'
+              style='min-width: 130px'
+              item-value='_id'
+              item-text='hid'
+              v-model='selectedSession'
+              @input='selectedActiveSession'
+              no-data-text='Nothing in queue.'
+              v-bind:items='activeSessions'>
+            </v-select>
           </v-card-title>
         </v-card>
-        </v-flex>
-      </v-layout>
-      <br/>
-
+      </v-flex>
+    </v-layout>
+    <br/>
 
     <v-layout>
       <v-flex xs12 lg8 offset-lg2>
         <v-card>
           <v-card-title>
-            <v-subheader><v-icon>note</v-icon>Details</v-subheader>
-            <v-spacer></v-spacer>
-            <v-btn primary flat><v-icon primary>history</v-icon>Patient History</v-btn>
-            <v-btn primary flat><v-icon primary>event_note</v-icon>Event Log</v-btn>
+            <v-subheader>
+              Details
+            </v-subheader>
           </v-card-title>
           <v-divider></v-divider>
 
           <v-card-text>
             <v-layout row wrap>
               <v-flex xs12 lg6>
-                <v-text-field @change='saveSession'
+                <v-text-field
+                  @blur='saveSession'
                   label='Description'
                   v-model='session.description'>
                 </v-text-field>
@@ -47,20 +59,20 @@
                   item-text='name'
                   v-model="session.cohortId"
                   persistent-hint
-                  @input='saveSession'
+                  @change='saveSession'
                   bottom>
                 </v-select>
               </v-flex>
-              </v-layout>
+            </v-layout>
 
             <v-layout row wrap>
               <v-flex xs12 lg6>
-                <v-checkbox v-model='session.active'
+                <v-checkbox v-model='active'
                   hint='Keep session in your local active queue?'
                   persistent-hint
                   color='primary'
-                  @change='saveSession'
-                  label='Session Active?'>
+                  @change='toggleActive'
+                  label='Active'>
                 </v-checkbox>
               </v-flex>
               <v-flex xs12 lg6>
@@ -68,34 +80,58 @@
             </v-layout>
 
           </v-card-text>
+
+          <v-divider></v-divider>
+
+          <!-- UPDATE OR DELETE -->
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn error flat @click.native='showDelete=true'>
+              Delete
+            </v-btn>
+            <v-btn primary flat @click.native='saveSession'>
+              Update
+            </v-btn>
+          </v-card-actions>
+
         </v-card>
       </v-flex>
     </v-layout>
-
     <br/>
 
-    <v-layout>
+    <v-layout v-if='snapshots.length>0'>
       <v-flex xs12 lg8 offset-lg2>
         <v-card class='elevation-0 banner'>
           <v-card-title>
             <v-subheader>
-            <v-icon>timelapse</v-icon> Snapshots
+              Add Snapshots
             </v-subheader>
+            <v-spacer></v-spacer>
+            <v-btn
+              primary
+              flat
+              :to="{name: 'Events', params: {id: this.id}}">
+              <v-icon class='blue--text text--darken-3'>
+                view_list
+              </v-icon>
+              View
+            </v-btn>
           </v-card-title>
           <v-divider></v-divider>
           <v-card-text>
 
             <v-list two-line>
-              <template v-for='(report, k) in cohort.reports'>
-                <v-list-tile avatar v-bind:key="report.name"
-                       @click.native='openSnapshot(report)'>
+              <template v-for='(report, k) in snapshots'>
+                <v-list-tile
+                  avatar
+                  v-bind:key="report.name"
+                  @click.native='openReportDialog(report)'>
                   <v-list-tile-avatar>
                     <v-icon
-                       v-if="report.type=='snapshot'"
-                       class='side-icon'>fa-line-chart</v-icon>
-                     <v-icon
-                       v-else
-                       class='side-icon'>fa-history</v-icon>
+                      v-if="report.type=='snapshot'"
+                      class='red--text text--darken-4'>
+                      fa-line-chart
+                    </v-icon>
                   </v-list-tile-avatar>
                   <v-list-tile-content>
                     <v-list-tile-title v-html="report.name">
@@ -111,132 +147,248 @@
         </v-card>
       </v-flex>
     </v-layout>
+    <br v-if='snapshots.length>0'/>
 
-  <v-dialog v-model='snapshotOpened' persistent width='450px'>
-    <v-card>
-      <v-card-title>
-        <v-icon>fa-line-chart</v-icon>
-        <v-subheader>{{currentReport.name}}</v-subheader>
-        <v-spacer></v-spacer>
-        <v-btn icon small @click.native='snapshotOpened=false'><v-icon>cancel</v-icon></v-btn>
-      </v-card-title>
-    </v-card>
-    </br>
-    <v-card>
-      <v-card-title>
-        <v-subheader>
-        {{timestamp}}
-        </v-subheader>
-        <v-spacer></v-spacer>
-        <v-btn primary flat @click.native='resetTime'>
-          <v-icon small primary>timer</v-icon>Now
-        </v-btn>
-      </v-card-title>
-    </v-card>
-    <br/>
-    <v-card>
-      <v-card-text>
-        <v-layout v-for='(field, k) in snapshot.fields' row :key='k'>
+    <v-layout v-if='histories.length>0'>
+      <v-flex xs12 lg8 offset-lg2>
+        <v-card class='elevation-0 banner'>
+          <v-card-title>
+            <v-subheader>
+              Edit Histories
+           </v-subheader>
+            <v-spacer></v-spacer>
+            <v-btn
+              primary
+              flat
+              :to="{name: 'Histories', params: {id: this.id}}">
+              <v-icon class='blue--text text--darken-3'>
+                view_list
+              </v-icon>
+              View
+            </v-btn>
+          </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text>
 
-          <!-- Boolean Input -->
-          <template v-if='field.isBoolean'>
-            <v-flex xs5 v-if='field.isBoolean'>
-              <v-checkbox color='primary' v-bind:label='field.name'
-                v-model='field.value'
-                :hint='field.description' persistent-hint></v-checkbox>
-            </v-flex>
-            <v-flex xs7 v-if='field.includeDetails'>
-              <v-text-field v-model='field.details' label='Details'></v-text-field>
-            </v-flex>
-          </template>
+            <v-list two-line>
+              <template v-for='(report, k) in histories'>
+                <v-list-tile
+                  avatar
+                  v-bind:key="report.name"
+                  @click.native='openReportDialog(report)'>
+                  <v-list-tile-avatar>
+                    <v-icon
+                      v-if="report.type=='snapshot'"
+                      class='red--text darken-3--text'>
+                      fa-line-chart
+                    </v-icon>
+                    <v-icon
+                      v-else="report.type=='snapshot'"
+                      class='blue--text text--darken-4'>
+                      fa-history
+                    </v-icon>
+                  </v-list-tile-avatar>
+                  <v-list-tile-content>
+                    <v-list-tile-title
+                      v-html="report.name">
+                    </v-list-tile-title>
+                    <v-list-tile-sub-title
+                      v-html='report.description'>
+                    </v-list-tile-sub-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                <v-divider
+                  v-if='k < histories.length-1'>
+                </v-divider>
+              </template>
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-flex>
+    </v-layout>
 
-          <!-- Text Input -->
-          <template v-else>
-            <v-flex xs12>
-              <v-text-field
-                v-model='field.value'
-                v-bind:label='field.name' :hint='field.description'
-                persistent-hint>
-              </v-text-field>
-            </v-flex>
-          </template>
-        </v-layout>
-      </v-card-text>
-      <v-divider></v-divider>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn primary @click.native='submitSnapshot'>
-          Submit {{currentReport.name}}</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+    <report-modal
+      @close='isReportDialogOpen=false'
+      @submit='saveReport'
+      :report='currentReport'
+      :isOpen='isReportDialogOpen'>
+    </report-modal>
+
+    <confirm-modal
+      @confirm='deleteSession'
+      :isOpen='showDelete'
+      @cancel='showDelete=false'
+      :message='deleteMessage'>
+    </confirm-modal>
+
+    <messenger
+      :isOpen='showMessage'
+      :message='message'
+      :type='messageType'>
+    </messenger>
 
   </v-container>
 </template>
 
 <script>
-  // import Component from "../component_location"
+
+import ReportModal from "./ReportModal"
+import ConfirmModal from "./ConfirmModal"
+import Messenger from "./Messenger"
 
   export default {
-    components: {},
+
+    components: {ReportModal, ConfirmModal, Messenger},
+
     props: ['id'],
 
     data () {
       return {
-        snapshotOpened: false,
+        isReportDialogOpen: false,
+        showDelete: false,
+        deleteMessage: 'Are you are sure you want to delete this session?',
+        message: '',
+        showMessage: false,
+        messageType: 'info',
         currentReport: {},
-        timestamp: null,
-        unixTime: null
+        update: true,
+        selectedSession: null,
+        active: false
       }
     },
 
+    watch: {
+
+      $route () {
+        this.$store.dispatch('getSession', this.id)
+      },
+
+    },
+
     methods: {
-      submitSnapshot() {
-        this.snapshot.timestamp = this.timestamp
-        this.snapshot.unixTime = this.unixTime
-        console.log(this.snapshot)
+
+      saveReport (report) {
+        if (report.type == 'history') {
+          this.session.histories.push(report)
+        } else {
+          this.session.events.push(report)
+        }
+        this.saveSession()
       },
 
-      resetTime () {
-        this.timestamp = moment().format('MMMM Do YYYY, h:mm:ss a')
-        this.unixTime = moment.now()
+      deleteSession () {
+        this.active = false
+        this.updateLocalStorage()
+        this.showDelete = false
+        this.$store.dispatch('deleteSession', this.session._id)
       },
 
-      openSnapshot (report) {
-        this.timestamp = moment().format('MMMM Do YYYY, h:mm:ss a')
-        this.unixTime = moment.now()
-        var snap = {fields: report.fields, timestamp: this.timestamp,
-          unixTime: this.unixTime}
-        this.$store.commit('setSnapshot', snap)
+      toggleActive () {
+        this.updateLocalStorage()
+      },
+
+      selectedActiveSession () {
+        this.$router.replace({name: 'Session',
+          params: {id: this.selectedSession}})
+      },
+
+      openEvents () {
+        this.$router.push({name: 'Events', params: {id: this.id}})
+      },
+
+      openReportDialog(report) {
+        if (report.type == 'history') {
+          var latestHistory = report
+          for (var k=0; k<this.session.histories.length; k++) {
+            if (report.uid == this.session.histories[k].uid) {
+              latestHistory = this.session.histories[k]
+            }
+            report = latestHistory
+          }
+        }
         this.currentReport = report
-        this.snapshotOpened=true
+        this.isReportDialogOpen = true
+      },
+
+      showInfo(message) {
+        this.message = message
+        this.showMessage = !this.showMessage
       },
 
       saveSession () {
-        console.log('Saving Session.')
         this.$store.dispatch('updateSession', this.session)
+        this.updateLocalStorage()
+        this.showInfo('Session successfully updated.')
+      },
+
+      updateLocalStorage () {
+        var local = localStorage.getItem('activeSessions')
+        local = JSON.parse(local)
+        if (this.active) {
+          local[this.session._id] = this.session.hid
+        } else {
+          delete local[this.session._id]
+        }
+        local = JSON.stringify(local)
+        localStorage.setItem('activeSessions', local)
+        this.update = !this.update
       }
     },
 
     computed: {
+
+      activeSessions () {
+        if (this.update){}
+        var sessions = localStorage.getItem('activeSessions')
+        sessions = JSON.parse(sessions)
+        var activeList = []
+        for (var key in sessions) {
+          if (sessions.hasOwnProperty(key)) {
+            activeList.push({_id: key, hid: sessions[key]})
+            if (!sessions[key]) {
+              delete sessions[key]
+              localStorage.setItem('activeSessions', JSON.stringify(sessions))
+            }
+          }
+        }
+        if (sessions.hasOwnProperty(this.id)) {
+          this.active = true
+        }
+        return activeList
+      },
+
       session() {
         return this.$store.state.session
       },
+
       snapshots () {
         var shots = []
         for (var k=0; k<this.cohort.reports.length; k++) {
-          if (this.cohort.reports[k].type = 'snapshot') {
+          if (this.cohort.reports[k].type == 'snapshot') {
             shots.push(this.cohort.reports[k])
           }
         }
         return shots
       },
+
+      histories () {
+        var hists = []
+        for (var k=0; k<this.cohort.reports.length; k++) {
+          if (this.cohort.reports[k].type == 'history') {
+            hists.push(this.cohort.reports[k])
+          }
+        }
+        return hists
+      },
+
       snapshot () {
         return this.$store.state.snapshot
       },
+
       cohorts () {
         return this.$store.state.cohorts
       },
+
       cohort () {
         if (this.session.cohortId) {
           for (var k=0; k<this.cohorts.length; k++) {
@@ -257,11 +409,11 @@
 
 </script>
 
-          <style scoped>
+<style scoped>
 .container {
-  padding-top: 75px;
+  padding-top: 85px;
 }
 .icon {
-  margin-right: 10px
+  margin-right: 15px
 }
 </style>

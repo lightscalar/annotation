@@ -1,4 +1,5 @@
 <template>
+
   <v-container>
 
     <v-layout>
@@ -12,7 +13,7 @@
               <v-breadcrumbs-item :to="{name:'Cohorts'}" class='white--text'>
                 Cohort List
               </v-breadcrumbs-item>
-              <v-breadcrumbs-item :to="{name: 'Cohort', params:{id: cohort._id}}">
+              <v-breadcrumbs-item :to="{name: 'Cohort', params:{id: id}}">
                 {{cohort.name}} Cohort
               </v-breadcrumbs-item>
               <v-breadcrumbs-item href='/#' class='brighten'>
@@ -25,13 +26,14 @@
     </v-layout>
     <br/>
 
-
     <v-layout>
       <v-flex xs12 lg8 offset-lg2>
         <v-card class='elevation-0 banner'>
 
           <v-card-title class=''>
-            <v-icon>fa-info-circle</v-icon> &nbsp; Report Details
+            <v-subheader>
+              Report Details
+            </v-subheader>
           </v-card-title>
 
           <v-divider></v-divider>
@@ -39,11 +41,16 @@
             <v-layout row wrap>
               <v-flex lg6 xs12>
                 <v-text-field
-                       label='Report Name'
-                       v-model='report.name'></v-text-field>
+                  @submit='updateDetails'
+                  @keyup = 'submit'
+                  label='Report Name'
+                  v-model='report.name'>
+                </v-text-field>
               </v-flex>
               <v-flex lg2 xs6>
-                <v-radio color='primary'
+                <v-radio
+                       color='primary'
+                       @change = 'updateDetails'
                        label="Snapshot"
                        v-model="report.type"
                        value="snapshot">
@@ -51,6 +58,7 @@
               </v-flex>
               <v-flex lg2 xs6>
                 <v-radio
+                       @change = 'updateDetails'
                        color='primary'
                        label="History"
                        v-model="report.type"
@@ -61,17 +69,18 @@
             <v-layout row wrap>
               <v-flex lg6 xs12>
                 <v-text-field
-                       label='Report Description'
-                       v-model='report.description'>
+                   @keyup = 'submit'
+                   label='Report Description'
+                   v-model='report.description'>
                 </v-text-field>
               </v-flex>
             </v-layout>
           </v-card-text>
           <v-divider></v-divider>
           <v-card-actions class='actions-panel'>
-            <v-btn error flat @click.native='deleteReport'>Delete</v-btn>
             <v-spacer></v-spacer>
-            <v-btn primary @click.native='updateDetails'>Save</v-btn>
+            <v-btn small error flat @click.native='confirmDelete=true'>Delete</v-btn>
+            <v-btn flat small primary @click.native='updateDetails'>Update</v-btn>
           </v-card-actions>
         </v-card>
       </v-flex>
@@ -83,23 +92,39 @@
       <v-flex xs12 lg8 offset-lg2>
         <v-card>
           <v-card-title class=''>
-            <v-icon>fa-check-square</v-icon> &nbsp; Fields
+            <v-subheader>
+              Fields
+            </v-subheader>
           </v-card-title>
           <v-divider></v-divider>
 
           <v-card-text v-if='report.fields.length>0'>
             <v-list two-line>
               <template v-for='(field,k) in report.fields'>
-                <v-list-tile avatar v-bind:key="field.name"
+                <v-list-tile
+                       @drop='onDrag'
+                       avatar v-bind:key="field.name"
                        @click.native='openField(field)'>
                   <v-list-tile-avatar>
-                    <v-icon class='side-icon'>library_books</v-icon>
+                    <v-icon small class='blue--text text--darken-3'
+                      v-if="field.type=='boolean'">
+                      check_box
+                    </v-icon>
+                    <v-icon class='blue--text text--darken-3'
+                      v-if="field.type=='numeric'">
+                      fa-calculator
+                    </v-icon>
+                    <v-icon class='blue--text text--darken-3'
+                      v-if="field.type=='text'">
+                      fa-comment
+                    </v-icon>
                   </v-list-tile-avatar>
                   <v-list-tile-content>
                     <v-list-tile-title
-                       v-html="field.name"></v-list-tile-title>
-                     <v-list-tile-sub-title
-                       v-html='field.description'></v-list-tile-sub-title>
+                      v-html="field.name">
+                    </v-list-tile-title>
+                    <v-list-tile-sub-title
+                      v-html='field.description'></v-list-tile-sub-title>
                   </v-list-tile-content>
                 </v-list-tile>
                 <v-divider v-if='k<report.fields.length-1'></v-divider>
@@ -128,39 +153,60 @@
       <v-card>
         <v-card-text>
 
-          <v-text-field v-model='field.name' label='Field Name'></v-text-field>
-          <v-text-field v-model='field.description' label='Field Description'></v-text-field>
+          <v-text-field
+            v-model='field.name'
+            label='Field Name'>
+          </v-text-field>
+          <v-text-field
+            v-model='field.description'
+            label='Field Description'>
+          </v-text-field>
           <v-layout row wrap>
-            <v-flex lg6>
-              <v-checkbox
-                       v-model='field.isBoolean'
-                       color='primary'
-                       label='Boolean?'>
-              </v-checkbox>
+            <v-flex lg4>
+              <v-radio
+                 v-model='field.type'
+                 value='numeric'
+                 color='primary'
+                 label='Numeric'>
+              </v-radio>
             </v-flex>
-            <v-checkbox
-                       v-if='field.isBoolean'
-                       v-model='field.includeDetails'
-                       color='primary'
-                       label='Include Details?'>
-            </v-checkbox>
+            <v-flex lg4>
+              <v-radio
+                v-model='field.type'
+                value='text'
+                color='primary'
+                label='Text'>
+              </v-radio>
+            </v-flex>
+            <v-flex lg4>
+              <v-radio
+               v-model='field.type'
+               value='boolean'
+               color='primary'
+               label='Boolean'>
+              </v-radio>
+            </v-flex>
+          </v-layout>
+          <v-layout row wrap>
 
           </v-layout>
           <v-layout row wrap>
-            <v-flex lg6>
-              <v-checkbox
-                       v-model='field.includeUnits'
-                       color='primary'
-                       label='Units?'>
-              </v-checkbox>
-            </v-flex>
 
             <v-flex lg6>
               <v-text-field
-                       label='Units'
+                       label='Define Units'
                        v-model='field.units'
-                       v-if='field.includeUnits'>
+                       :disabled="field.type != 'numeric'">
               </v-text-field>
+            </v-flex>
+
+            <v-flex lg6>
+              <v-checkbox
+                       label='Allow Details?'
+                       color='primary'
+                       v-model='field.includeDetails'
+                       :disabled="field.type != 'boolean'">
+              </v-checkbox>
             </v-flex>
 
           </v-layout>
@@ -171,7 +217,7 @@
             Delete
           </v-btn>
           <v-spacer></v-spacer>
-          <v-btn primary @click.native='editField=!editField'>Close</v-btn>
+          <v-btn flat small @click.native='editField=!editField'>Cancel</v-btn>
           <v-btn primary
                        @click.native='editField=!editField; updateDetails()'>Save
           </v-btn>
@@ -179,6 +225,23 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model='confirmDelete' persistent>
+      <v-card>
+        <v-card-title class='red white--text text--lighten-2'>
+          Are You Certain?
+        </v-card-title>
+        <v-card-text>
+          Are you are sure you want to delete this report? This cannot be
+          undone.
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions>
+          <v-btn @click.native='confirmDelete=false'>Cancel</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn error flat @click.native='deleteReport'>Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+  </v-dialog>
 
   </v-container>
 
@@ -188,19 +251,35 @@
 // import Component from "../component_location"
 
   export default {
+
     components: {},
+
     props: ['id', 'reportId'],
 
     data () {
       return {
+        confirmDelete: false,
         open: true,
         message: '',
         showMessage: false,
         editField: false,
-        field: {isBoolean: true, includeDetails: false, includeUnits: false, units:''}
+        field: {name: '', isBoolean: true, includeDetails: false,
+          includeUnits: false, units:''}
       }
     },
+
     methods: {
+
+      onDrag (dragEvent) {
+        console.log(dragEvent)
+      },
+
+      submit (keyEvent) {
+        if (keyEvent.keyCode == 13) {
+          this.updateDetails()
+        }
+      },
+
       deleteReport() {
         var self = this
         this.cohort.reports.splice(this.reportId,1)
@@ -208,6 +287,7 @@
           self.$router.push({name: 'Cohort', params: {'id': self.cohort._id}})
         })
       },
+
       updateDetails() {
         var self = this
         this.$store.dispatch('updateCohort', this.cohort).then(function(){
@@ -215,6 +295,7 @@
           self.showMessage = true
         })
       },
+
       deleteCurrentField() {
         for (var k=0; k<this.report.fields.length; k++) {
           if (this.field.name == this.report.fields[k].name) {
@@ -223,15 +304,18 @@
         }
         this.updateDetails()
       },
+
       addField() {
         var field = this.$store.state.field
         field.value = ''
         field.details = ''
+        field.uid = guid()
         this.report.fields.push(field)
         this.field = field
         this.editField = true
-        this.$store.commit('reset')
+        this.$store.commit('resetField')
       },
+
       openField(field) {
         console.log('Opening Dialog.')
         this.editField = true
@@ -240,17 +324,21 @@
     },
 
     computed: {
-      cohort() {
+
+      cohort () {
         return this.$store.state.cohort
       },
-      report() {
+
+      report () {
         var reports = this.$store.state.cohort.reports
+        if (!reports) {return {fields:[]}}
         if (reports.length>0) {
           return reports[this.reportId]
         } else {
           return {fields: []}
         }
       }
+
     },
 
     mounted() {
@@ -263,16 +351,14 @@
 <style scoped>
 
 .container {
-  padding-top: 75px;
+  padding-top: 85px;
 }
 .header {
   background-color: #305580 !important;
   font-size: 16px;
 }
 .icon {
-}
-.brighten {
-  color: black
+  margin-right: 15px
 }
 .side-icon {
   color: #305580 !important

@@ -1,4 +1,5 @@
 <template>
+
   <v-container>
     <v-layout>
       <v-flex xs12 lg8 offset-lg2>
@@ -17,22 +18,25 @@
       </v-flex>
     </v-layout>
     <br/>
-    <v-layout>
-      <v-flex xs12 lg8 offset-lg2>
 
+    <v-layout v-if='cohorts.length>0'>
+      <v-flex xs12 lg8 offset-lg2>
         <v-card>
           <v-card-title class=''>
-            <v-icon>fa-list-ul</v-icon> &nbsp;&nbsp;
+            <v-subheader>
              Cohorts
+            </v-subheader>
           </v-card-title>
           <v-divider></v-divider>
           <v-card-text>
           <v-list two-line>
             <template v-for='(cohort,k) in cohorts'>
               <v-list-tile avatar v-bind:key="cohort.name"
-                                 :to="{name: 'Cohort', params:{id: cohort._id}}">
+                :to="{name: 'Cohort', params:{id: cohort._id}}">
                 <v-list-tile-avatar>
-                  <v-icon class='side-icon'>fa-users</v-icon>
+                  <v-icon class='blue--text text--darken-3'>
+                    people
+                  </v-icon>
                 </v-list-tile-avatar>
                 <v-list-tile-content>
                   <v-list-tile-title v-html="cohort.name + ' Cohort'"></v-list-tile-title>
@@ -48,6 +52,14 @@
       </v-card>
     </v-flex>
   </v-layout>
+
+  <div v-else class='text-xs-center'>
+    <h2 class='white--text text-xs-center'>
+      No Cohorts Available.
+    </h2>
+    <v-btn primary :to='{name: "CreateCohort"}'>Create One</v-btn>
+  </div>
+
   </v-container>
 
 </template>
@@ -84,7 +96,7 @@
 <style scoped>
 
 .container {
-  padding-top: 75px;;
+  padding-top: 85px;;
 }
 .header {
   background-color: #305580;
@@ -92,6 +104,9 @@
 }
 .header .icon {
     color: #fffff;
+}
+.icon {
+  margin-right: 15px;
 }
 
 </style>

@@ -10,22 +10,23 @@ vitalSigns.fields = [{name: 'Heart Rate', isBoolean: false, includeUnits: true,
   description: 'Patient heartrate in BPM.'}]
 
 var report = {name: '', description: '', fields: [], type: 'history'}
-var field = {name:'', description: '', isBoolean: false, includeUnits: false,
-             units: '', includeDetails: false}
-var session = {active: false, hid: null, cohortId: null}
+var field = {name:'', description: '', type: 'numeric', includeUnits: false,
+             units: '', includeDetails: false, isTextOnly: false}
+var session = {hid: null, cohortId: null, events: [], histories: []}
 
 export default new Vuex.Store({
 
   // ------ STATE VARIABLES --------------------
   state: {
     cohorts: [],
-    cohort: {reports: [], histories: {}},
+    cohort: {reports: [], histories: []},
     histories: [],
     history: {},
     vitalSigns: vitalSigns,
-    report: report,
+    report: {name: '', description: '', fields: [], type: 'history'},
     field: field,
     session: session,
+    sessions: [],
     snapshot: {}
   },
 
@@ -40,14 +41,20 @@ export default new Vuex.Store({
     setSession(state, session) {
       state.session = session
     },
+    setSessions(state, sessions) {
+      state.sessions = sessions
+    },
     setCohorts(state, cohorts) {
       state.cohorts = cohorts
     },
-    reset(state) {
-      state.field = {name:'', description: '', isBoolean: false,
+    resetField(state) {
+      state.field = {name:'', description: '', isBoolean: false, type: 'numeric',
                      includeUnits: false, units: '', includeDetails: false}
+    },
+    reset(state) {
+      state.cohort = {name:'', description: '', reports: []}
       state.report = {name: '', description: '', fields: [], type: 'history'}
-      state.session = {active: false, hid: null, cohortId: null}
+      state.session = {hid: null, cohortId: null, events:[], histories:[]}
       state.snapshot = {}
     }
   },
@@ -75,6 +82,11 @@ export default new Vuex.Store({
        router.push({name: 'LandingPage'})
       })
     },
+    deleteSession(context, id) {
+      api.deleteResource('session', id).then(function(resp) {
+       router.push({name: 'LandingPage'})
+      })
+    },
     updateCohort(context, cohort) {
       api.putResource('cohort', cohort).then(function(resp) {
         context.dispatch('getCohort', resp.data._id)
@@ -83,6 +95,11 @@ export default new Vuex.Store({
     getSession(context, id) {
       api.getResource('session', id).then( function (resp) {
         context.commit('setSession', resp.data)
+      })
+    },
+    listSessions(context) {
+      api.listResource('sessions').then( function (resp) {
+        context.commit('setSessions', resp.data)
       })
     },
     updateSession(context, session) {
@@ -94,9 +111,9 @@ export default new Vuex.Store({
       hid = hid.toUpperCase()
       api.queryResource('sessions', 'hid', hid).then( function (resp) {
         if (resp.data.length==0) { // need to create session
-          var session = {active: true, events: [], histories: []}
+          var session = {active: false, events: [], histories: []}
           session.hid = hid
-          api.postResource('sessions', session).then( function (resp) {
+          api.postResource('sessions', session).then(function (resp) {
             context.commit('setSession', resp.data)
             router.push({name: 'Session',
               params:{'id': context.state.session._id}})
