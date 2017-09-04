@@ -119,7 +119,6 @@ html, body, main {
 .subheader {
   font-weight: bold;
   color: #c62828 !important;
-  font-size: 18px !important;
 }
 .side-icon {
   color: #305580 !important

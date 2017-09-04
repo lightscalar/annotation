@@ -48,12 +48,7 @@
         </v-chip>
       </td>
       <td v-if="props.item.type=='text'">
-        <v-chip
-          v-tooltip:left="{html: props.item.value}"
-          label
-          class='red darken-3 white--text'>
           {{props.item.value}}
-        </v-chip>
       </td>
 
     </template>

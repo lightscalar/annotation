@@ -10,7 +10,7 @@
                 Home
               </v-breadcrumbs-item>
               <v-breadcrumbs-item href='/#' class='brighten'>
-                List Available Cohorts
+                Cohort List
               </v-breadcrumbs-item>
             </v-breadcrumbs>
           </v-card-title>
