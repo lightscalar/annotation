@@ -1,7 +1,7 @@
 import axios from 'axios'
 window.axios = axios
 
-const BASE_URL = 'http://localhost/api'
+const BASE_URL = 'http://45.55.145.118/api'
 // const BASE_URL = 'http://nvs-serve.ngrok.io'
 
 // Basic API for talking to the webserver API.
